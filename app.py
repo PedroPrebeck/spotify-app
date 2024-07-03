@@ -45,23 +45,23 @@ def index():
 
 @app.route('/login')
 def login():
+    session.clear()  # Ensure the session is cleared before starting a new one
     auth_url = sp_oauth.get_authorize_url()
     return redirect(auth_url)
 
 @app.route('/callback')
 def callback():
     session_id = str(uuid.uuid4())  # Generate a new unique session ID
-    session.clear()
-    session['id'] = session_id  # Store the session ID
     code = request.args.get('code')
     token_info = sp_oauth.get_access_token(code)
-    session["token_info"] = token_info
-    session["user_id"] = token_info['access_token']  # Store unique user ID for debugging
+    session['id'] = session_id  # Store the session ID
+    session['token_info'] = token_info
+    session['user_id'] = token_info['access_token']  # Store unique user ID for debugging
     print(f"[DEBUG] New session started for user: {session['user_id']}, session ID: {session['id']}")
     return redirect('/create_playlist')
 
 def get_token():
-    token_info = session.get("token_info", {})
+    token_info = session.get('token_info', {})
     if not token_info:
         print("[DEBUG] No token found in session.")
         return None
@@ -70,7 +70,7 @@ def get_token():
     if is_expired:
         print("[DEBUG] Token expired, refreshing...")
         token_info = sp_oauth.refresh_access_token(token_info['refresh_token'])
-        session["token_info"] = token_info  # Update session with new token info
+        session['token_info'] = token_info  # Update session with new token info
     return token_info
 
 @app.route('/create_playlist')
