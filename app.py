@@ -8,6 +8,7 @@ from sklearn.cluster import KMeans
 from dotenv import load_dotenv
 from flask_session import Session
 import redis
+import uuid
 
 load_dotenv()  # Load environment variables from .env file
 
@@ -15,11 +16,12 @@ app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
 
 # Redis server configuration
-redis_url = os.getenv('REDIS_URL')
+redis_url = os.getenv('REDIS_URL', 'redis://red-cq2p7acs1f4s73dcmfn0:6379')
 app.config['SESSION_TYPE'] = 'redis'
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_USE_SIGNER'] = True
 app.config['SESSION_REDIS'] = redis.StrictRedis.from_url(redis_url)
+app.config['SESSION_COOKIE_NAME'] = 'spotify_session'
 
 Session(app)
 
@@ -30,6 +32,11 @@ SPOTIPY_REDIRECT_URI = os.getenv('SPOTIPY_REDIRECT_URI')
 SCOPE = 'user-top-read playlist-modify-public'
 
 sp_oauth = SpotifyOAuth(SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI, scope=SCOPE)
+
+@app.before_request
+def make_session_permanent():
+    session.permanent = True
+    app.permanent_session_lifetime =  time.timedelta(minutes=5)
 
 @app.route('/')
 def index():
@@ -42,12 +49,14 @@ def login():
 
 @app.route('/callback')
 def callback():
+    session_id = str(uuid.uuid4())  # Generate a new unique session ID
     session.clear()
+    session['id'] = session_id  # Store the session ID
     code = request.args.get('code')
     token_info = sp_oauth.get_access_token(code)
     session["token_info"] = token_info
     session["user_id"] = token_info['access_token']  # Store unique user ID for debugging
-    print(f"[DEBUG] New session started for user: {session['user_id']}")
+    print(f"[DEBUG] New session started for user: {session['user_id']}, session ID: {session['id']}")
     return redirect('/create_playlist')
 
 def get_token():
@@ -73,7 +82,7 @@ def create_playlist():
 
     user_profile = sp.current_user()
     user_name = user_profile['display_name']
-    print(f"[DEBUG] Creating playlist for user: {user_name}, session ID: {session['user_id']}")
+    print(f"[DEBUG] Creating playlist for user: {user_name}, session ID: {session['id']}")
 
     # Get user's top tracks
     top_tracks = sp.current_user_top_tracks(limit=50)
@@ -132,7 +141,7 @@ def save_playlist():
 
 @app.route('/logout')
 def logout():
-    print(f"[DEBUG] Logging out user: {session.get('user_id')}")
+    print(f"[DEBUG] Logging out user: {session.get('user_id')}, session ID: {session.get('id')}")
     session.clear()
     return redirect(url_for('index'))
 
