@@ -45,7 +45,7 @@ def index():
 
 @app.route('/login')
 def login():
-    session.clear()  # Ensure the session is cleared before starting a new one
+    session.clear()  # Clear session at the beginning of login
     auth_url = sp_oauth.get_authorize_url()
     return redirect(auth_url)
 
