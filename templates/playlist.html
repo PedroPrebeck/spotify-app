@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clustered Playlist</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <h1>Clustered Playlist</h1>
+    <div>
+        <h2>Top Genre: {{ top_genre }}</h2>
+    </div>
+    <div>
+        {{ plot_div|safe }}
+    </div>
+    <div>
+        <h2>Track List</h2>
+        <ul>
+            {% for track in track_names %}
+                <li>{{ track }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <form action="/save_playlist" method="post">
+        <button type="submit">Save Playlist</button>
+    </form>
+</body>
+</html>
+  
