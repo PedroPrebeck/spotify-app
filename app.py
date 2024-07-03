@@ -7,14 +7,20 @@ import pandas as pd
 from sklearn.cluster import KMeans
 from dotenv import load_dotenv
 from flask_session import Session
+import redis
 
 load_dotenv()  # Load environment variables from .env file
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
 
-# Configure session to use filesystem (or you can use Redis or other options)
-app.config['SESSION_TYPE'] = 'filesystem'
+# Redis server configuration
+redis_url = os.getenv('REDIS_URL')
+app.config['SESSION_TYPE'] = 'redis'
+app.config['SESSION_PERMANENT'] = False
+app.config['SESSION_USE_SIGNER'] = True
+app.config['SESSION_REDIS'] = redis.StrictRedis.from_url(redis_url)
+
 Session(app)
 
 # Set your Spotify API credentials from environment variables
@@ -39,9 +45,7 @@ def callback():
     session.clear()
     code = request.args.get('code')
     token_info = sp_oauth.get_access_token(code)
-    user_id = token_info['access_token']['id']  # Get user ID from token info
     session["token_info"] = token_info
-    session["user_id"] = user_id  # Store user ID in session
     return redirect('/create_playlist')
 
 def get_token():
@@ -62,7 +66,6 @@ def create_playlist():
 
     user_profile = sp.current_user()
     user_name = user_profile['display_name']
-    session['user_name'] = user_name
 
     # Get user's top tracks
     top_tracks = sp.current_user_top_tracks(limit=50)
@@ -95,7 +98,7 @@ def create_playlist():
     session['playlist_name'] = 'Clustered Playlist'
 
     return render_template('playlist.html', top_genre=top_genre, track_names=track_names, user_name=user_name)
-  
+
 @app.route('/save_playlist', methods=['POST'])
 def save_playlist():
     token_info = get_token()
