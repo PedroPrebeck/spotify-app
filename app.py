@@ -1,6 +1,6 @@
 import os
 import time
-from flask import Flask, request, redirect, session, render_template, jsonify
+from flask import Flask, request, redirect, session, render_template, jsonify, url_for
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 import pandas as pd
@@ -45,12 +45,16 @@ def get_token():
     is_expired = token_info['expires_at'] - now < 60
     if is_expired:
         token_info = sp_oauth.refresh_access_token(token_info['refresh_token'])
+        session["token_info"] = token_info  # Update session with new token info
     return token_info
 
 @app.route('/create_playlist')
 def create_playlist():
     token_info = get_token()
     sp = spotipy.Spotify(auth=token_info['access_token'])
+
+    user_profile = sp.current_user()
+    user_name = user_profile['display_name']
 
     # Get user's top tracks
     top_tracks = sp.current_user_top_tracks(limit=50)
@@ -82,7 +86,7 @@ def create_playlist():
     session['cluster_tracks'] = cluster_tracks['id'].tolist()
     session['playlist_name'] = 'Clustered Playlist'
 
-    return render_template('playlist.html', top_genre=top_genre, track_names=track_names)
+    return render_template('playlist.html', top_genre=top_genre, track_names=track_names, user_name=user_name)
 
 @app.route('/save_playlist', methods=['POST'])
 def save_playlist():
@@ -103,6 +107,11 @@ def save_playlist():
     sp.user_playlist_add_tracks(user_id, playlist['id'], track_ids)
 
     return jsonify({'playlist_url': playlist['external_urls']['spotify']})
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(debug=True)

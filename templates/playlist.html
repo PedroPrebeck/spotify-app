@@ -7,7 +7,7 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
-    <h1>Clustered Playlist</h1>
+    <h1>Clustered Playlist for {{ user_name }}</h1>
     <div>
         <h2>Top Genre: {{ top_genre }}</h2>
     </div>
@@ -25,6 +25,8 @@
     <form action="/save_playlist" method="post">
         <button type="submit">Save Playlist</button>
     </form>
+    <div>
+        <a href="/logout">Logout</a>
+    </div>
 </body>
 </html>
-  
