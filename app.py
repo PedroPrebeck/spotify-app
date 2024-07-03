@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from flask_session import Session
 import redis
 import uuid
+from datetime import timedelta
 
 load_dotenv()  # Load environment variables from .env file
 
@@ -16,7 +17,7 @@ app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
 
 # Redis server configuration
-redis_url = os.getenv('REDIS_URL', 'redis://red-cq2p7acs1f4s73dcmfn0:6379')
+redis_url = os.getenv('REDIS_URL')
 app.config['SESSION_TYPE'] = 'redis'
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_USE_SIGNER'] = True
@@ -36,7 +37,7 @@ sp_oauth = SpotifyOAuth(SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRE
 @app.before_request
 def make_session_permanent():
     session.permanent = True
-    app.permanent_session_lifetime =  time.timedelta(minutes=5)
+    app.permanent_session_lifetime = timedelta(minutes=30)
 
 @app.route('/')
 def index():
@@ -63,7 +64,7 @@ def get_token():
     token_info = session.get("token_info", {})
     if not token_info:
         print("[DEBUG] No token found in session.")
-        return redirect('/')
+        return None
     now = int(time.time())
     is_expired = token_info['expires_at'] - now < 60
     if is_expired:
