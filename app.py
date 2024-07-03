@@ -1,16 +1,21 @@
+from flask import Flask, request, redirect, session, render_template, jsonify, url_for
 import os
 import time
-from flask import Flask, request, redirect, session, render_template, jsonify, url_for
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 import pandas as pd
 from sklearn.cluster import KMeans
 from dotenv import load_dotenv
+from flask_session import Session
 
 load_dotenv()  # Load environment variables from .env file
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
+
+# Configure session to use filesystem (or you can use Redis or other options)
+app.config['SESSION_TYPE'] = 'filesystem'
+Session(app)
 
 # Set your Spotify API credentials from environment variables
 SPOTIPY_CLIENT_ID = os.getenv('SPOTIPY_CLIENT_ID')
