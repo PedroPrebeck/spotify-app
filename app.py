@@ -46,15 +46,19 @@ def callback():
     code = request.args.get('code')
     token_info = sp_oauth.get_access_token(code)
     session["token_info"] = token_info
+    session["user_id"] = token_info['access_token']  # Store unique user ID for debugging
+    print(f"[DEBUG] New session started for user: {session['user_id']}")
     return redirect('/create_playlist')
 
 def get_token():
     token_info = session.get("token_info", {})
     if not token_info:
+        print("[DEBUG] No token found in session.")
         return redirect('/')
     now = int(time.time())
     is_expired = token_info['expires_at'] - now < 60
     if is_expired:
+        print("[DEBUG] Token expired, refreshing...")
         token_info = sp_oauth.refresh_access_token(token_info['refresh_token'])
         session["token_info"] = token_info  # Update session with new token info
     return token_info
@@ -62,10 +66,14 @@ def get_token():
 @app.route('/create_playlist')
 def create_playlist():
     token_info = get_token()
+    if not token_info:
+        return redirect('/')
+
     sp = spotipy.Spotify(auth=token_info['access_token'])
 
     user_profile = sp.current_user()
     user_name = user_profile['display_name']
+    print(f"[DEBUG] Creating playlist for user: {user_name}, session ID: {session['user_id']}")
 
     # Get user's top tracks
     top_tracks = sp.current_user_top_tracks(limit=50)
@@ -102,6 +110,9 @@ def create_playlist():
 @app.route('/save_playlist', methods=['POST'])
 def save_playlist():
     token_info = get_token()
+    if not token_info:
+        return redirect('/')
+
     sp = spotipy.Spotify(auth=token_info['access_token'])
 
     user_id = sp.me()['id']
@@ -121,6 +132,7 @@ def save_playlist():
 
 @app.route('/logout')
 def logout():
+    print(f"[DEBUG] Logging out user: {session.get('user_id')}")
     session.clear()
     return redirect(url_for('index'))
 
