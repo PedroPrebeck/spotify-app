@@ -61,7 +61,9 @@ def login():
     session.clear()  # Clear session at the beginning of login
     session_id = str(uuid.uuid4())  # Generate a new unique session ID
     session['id'] = session_id  # Store the session ID
+    print(f"[DEBUG] Generated new session ID: {session_id}")
     auth_url = get_spotify_oauth(session_id).get_authorize_url()
+    print(f"[DEBUG] Redirecting to Spotify auth URL: {auth_url}")
     return redirect(auth_url)
 
 @app.route('/callback')
@@ -75,6 +77,7 @@ def callback():
     sp_oauth = get_spotify_oauth(session_id)
     try:
         token_info = sp_oauth.get_access_token(code)
+        print(f"[DEBUG] Access token obtained: {token_info}")
     except Exception as e:
         print(f"[DEBUG] Error getting access token: {e}")
         return redirect('/login')
@@ -82,7 +85,14 @@ def callback():
     session['token_info'] = token_info
     session['user_id'] = token_info['access_token']  # Store unique user ID for debugging
     sp = spotipy.Spotify(auth=token_info['access_token'])
-    user_profile = sp.current_user()
+    try:
+        user_profile = sp.current_user()
+    except spotipy.exceptions.SpotifyException as e:
+        print(f"[DEBUG] Error fetching user profile: {e}")
+        if e.http_status == 403:
+            print("[DEBUG] Ensure the user has authorized the application and the app has the correct scopes.")
+        return redirect('/login')
+    
     user_id = user_profile['id']
     session['spotify_user_id'] = user_id  # Store Spotify user ID
     session['user_name'] = user_profile['display_name']  # Store user's display name for convenience
