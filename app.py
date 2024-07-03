@@ -39,7 +39,9 @@ def callback():
     session.clear()
     code = request.args.get('code')
     token_info = sp_oauth.get_access_token(code)
+    user_id = token_info['access_token']['id']  # Get user ID from token info
     session["token_info"] = token_info
+    session["user_id"] = user_id  # Store user ID in session
     return redirect('/create_playlist')
 
 def get_token():
@@ -60,6 +62,7 @@ def create_playlist():
 
     user_profile = sp.current_user()
     user_name = user_profile['display_name']
+    session['user_name'] = user_name
 
     # Get user's top tracks
     top_tracks = sp.current_user_top_tracks(limit=50)
@@ -92,7 +95,7 @@ def create_playlist():
     session['playlist_name'] = 'Clustered Playlist'
 
     return render_template('playlist.html', top_genre=top_genre, track_names=track_names, user_name=user_name)
-
+  
 @app.route('/save_playlist', methods=['POST'])
 def save_playlist():
     token_info = get_token()
