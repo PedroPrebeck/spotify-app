@@ -57,7 +57,11 @@ def callback():
     session['id'] = session_id  # Store the session ID
     session['token_info'] = token_info
     session['user_id'] = token_info['access_token']  # Store unique user ID for debugging
-    print(f"[DEBUG] New session started for user: {session['user_id']}, session ID: {session['id']}")
+    # Get the user's Spotify ID
+    sp = spotipy.Spotify(auth=token_info['access_token'])
+    user_id = sp.me()['id']
+    session['spotify_user_id'] = user_id  # Store Spotify user ID
+    print(f"[DEBUG] New session started for user: {session['spotify_user_id']}, session ID: {session['id']}")
     return redirect('/create_playlist')
 
 def get_token():
@@ -80,6 +84,12 @@ def create_playlist():
         return redirect('/')
 
     sp = spotipy.Spotify(auth=token_info['access_token'])
+
+    # Verify if the token corresponds to the stored user ID
+    user_id = sp.me()['id']
+    if user_id != session.get('spotify_user_id'):
+        print("[DEBUG] Token does not match the session user ID.")
+        return redirect('/logout')
 
     user_profile = sp.current_user()
     user_name = user_profile['display_name']
@@ -125,7 +135,12 @@ def save_playlist():
 
     sp = spotipy.Spotify(auth=token_info['access_token'])
 
+    # Verify if the token corresponds to the stored user ID
     user_id = sp.me()['id']
+    if user_id != session.get('spotify_user_id'):
+        print("[DEBUG] Token does not match the session user ID.")
+        return redirect('/logout')
+
     playlist_name = session.get('playlist_name', 'Clustered Playlist')
     track_ids = session.get('cluster_tracks', [])
 
@@ -142,7 +157,7 @@ def save_playlist():
 
 @app.route('/logout')
 def logout():
-    print(f"[DEBUG] Logging out user: {session.get('user_id')}, session ID: {session.get('id')}")
+    print(f"[DEBUG] Logging out user: {session.get('spotify_user_id')}, session ID: {session.get('id')}")
     session.clear()
     return redirect(url_for('index'))
 
