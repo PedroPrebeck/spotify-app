@@ -37,6 +37,8 @@ SCOPE = 'user-top-read playlist-modify-public'
 redis_client = redis.StrictRedis.from_url(redis_url)
 
 def get_spotify_oauth(session_id):
+    print(f"[DEBUG] Creating SpotifyOAuth instance for session_id: {session_id}")
+    print(f"[DEBUG] SPOTIPY_CLIENT_ID: {SPOTIPY_CLIENT_ID}")
     return SpotifyOAuth(
         client_id=SPOTIPY_CLIENT_ID,
         client_secret=SPOTIPY_CLIENT_SECRET,
@@ -66,8 +68,17 @@ def login():
 def callback():
     session_id = session['id']  # Retrieve the session ID
     code = request.args.get('code')
+    if not code:
+        print("[DEBUG] No code in request args")
+        return redirect('/login')
+    
     sp_oauth = get_spotify_oauth(session_id)
-    token_info = sp_oauth.get_access_token(code)
+    try:
+        token_info = sp_oauth.get_access_token(code)
+    except Exception as e:
+        print(f"[DEBUG] Error getting access token: {e}")
+        return redirect('/login')
+    
     session['token_info'] = token_info
     session['user_id'] = token_info['access_token']  # Store unique user ID for debugging
     sp = spotipy.Spotify(auth=token_info['access_token'])
