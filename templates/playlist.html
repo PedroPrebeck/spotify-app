@@ -4,15 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clustered Playlist</title>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
     <h1>Clustered Playlist for {{ user_name }}</h1>
     <div>
-        <h2>Top Genre: {{ top_genre }}</h2>
+        <a href="/logout">Logout</a>
     </div>
     <div>
-        {{ plot_div|safe }}
+        <h2>Top Genre: {{ top_genre }}</h2>
     </div>
     <div>
         <h2>Track List</h2>
@@ -25,8 +24,5 @@
     <form action="/save_playlist" method="post">
         <button type="submit">Save Playlist</button>
     </form>
-    <div>
-        <a href="/logout">Logout</a>
-    </div>
 </body>
 </html>
