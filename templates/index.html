@@ -4,9 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spotify Playlist Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+            background-color: #121212;
+            color: #fff;
+        }
+        h1 {
+            color: #fff;
+        }
+        a, button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin-top: 20px;
+            background-color: #6a1b9a; /* Purple color */
+            color: #fff;
+            text-decoration: none;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        a:hover, button:hover {
+            background-color: #4a0072; /* Darker purple color */
+        }
+    </style>
 </head>
 <body>
     <h1>Welcome to Spotify Playlist Generator</h1>
-    <a href="/login">Login with Spotify</a>
+    {% if user_name %}
+        <p>Hello, {{ user_name }}!</p>
+        <a href="/logout">Logout</a>
+        <br><br>
+        <form action="/analyze_results" method="get">
+            <button type="submit">Analyze my Music</button>
+        </form>
+    {% else %}
+        <a href="/login">Login with Spotify</a>
+    {% endif %}
 </body>
 </html>

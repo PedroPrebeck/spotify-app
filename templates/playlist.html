@@ -4,25 +4,120 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clustered Playlist</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-color: #121212;
+            color: #fff;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #333;
+        }
+        .header .user-info {
+            font-size: 1.2em;
+        }
+        .header a, .header button {
+            background-color: #6a1b9a; /* Purple color */
+            color: #fff;
+            text-decoration: none;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            margin: 0 10px;
+            cursor: pointer;
+        }
+        .header a:hover, .header button:hover {
+            background-color: #4a0072; /* Darker purple color */
+        }
+        h1, h2 {
+            color: #fff;
+        }
+        .song-cards {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .song-card {
+            background-color: #1e1e1e;
+            display: inline-block;
+            text-align: left;
+            width: 200px;
+            margin: 20px;
+            font-family: Arial, sans-serif;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        .album-cover {
+            width: 200px;
+            height: 200px;
+        }
+        .song-info {
+            padding: 10px;
+        }
+        .song-name {
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+        .artist-name {
+            color: #bbb;
+        }
+        .form-container {
+            margin-top: 20px;
+        }
+        .form-container button {
+            background-color: #6a1b9a; /* Purple color */
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        .form-container button:hover {
+            background-color: #4a0072; /* Darker purple color */
+        }
+    </style>
 </head>
 <body>
-    <h1>Clustered Playlist for {{ user_name }}</h1>
-    <div>
-        <a href="/logout">Logout</a>
+    <div class="header">
+        <div class="user-info">
+            {{ user_name }}
+        </div>
+        <div class="navigation">
+            <a href="/">Home</a>
+            <a href="/logout">Logout</a>
+        </div>
     </div>
+    <h1>Clustered Playlist for {{ user_name }}</h1>
     <div>
         <h2>Top Genre: {{ top_genre }}</h2>
     </div>
     <div>
         <h2>Track List</h2>
-        <ul>
-            {% for track in track_names %}
-                <li>{{ track }}</li>
+        <div class="song-cards">
+            {% for track in tracks %}
+                <div class="song-card">
+                    <img class="album-cover" src="{{ track.album_cover }}" alt="Album Cover">
+                    <div class="song-info">
+                        <div class="song-name">{{ track.name }}</div>
+                        <div class="artist-name">{{ track.artist }}</div>
+                    </div>
+                </div>
             {% endfor %}
-        </ul>
+        </div>
     </div>
-    <form action="/save_playlist" method="post">
-        <button type="submit">Save Playlist</button>
-    </form>
+    <div class="form-container">
+        <form action="/save_playlist" method="post">
+            <button type="submit">Save Playlist</button>
+        </form>
+    </div>
 </body>
 </html>
