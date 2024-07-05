@@ -54,10 +54,31 @@
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             overflow: hidden;
+            position: relative;
         }
         .album-cover {
             width: 200px;
             height: 200px;
+        }
+        .trash-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 165, 0, 0.9); /* Orange color */
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            padding: 10px;
+            display: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); /* Drop shadow */
+        }
+        .song-card:hover .trash-button {
+            display: block;
+        }
+        .trash-button svg {
+            width: 24px; /* Larger icon */
+            height: 24px;
+            fill: #fff; /* White color */
         }
         .song-info {
             padding: 10px;
@@ -84,6 +105,38 @@
         .form-container button:hover {
             background-color: #4a0072; /* Darker purple color */
         }
+        .add-recommendations {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #2e2e2e;
+            color: gray;
+            width: 200px;
+            margin: 20px;
+            font-family: Arial, sans-serif;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            padding: 20px;
+        }
+        .add-icon {
+            font-size: 50px;
+            color: gray;
+        }
+        .recommend-slider {
+            width: 80%;
+            margin-top: 10px;
+        }
+        .recommend-button {
+            background-color: orange;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -92,8 +145,8 @@
             {{ user_name }}
         </div>
         <div class="navigation">
-            <a href="/">Home</a>
-            <a href="/logout">Logout</a>
+            <a href="{{ url_for('main.index') }}">Home</a>
+            <a href="{{ url_for('auth.logout') }}">Logout</a>
         </div>
     </div>
     <h1>Clustered Playlist for {{ user_name }}</h1>
@@ -102,22 +155,107 @@
     </div>
     <div>
         <h2>Track List</h2>
-        <div class="song-cards">
+        <div class="song-cards" id="song-cards">
             {% for track in tracks %}
-                <div class="song-card">
+                <div class="song-card" id="song-{{ track.id }}">
                     <img class="album-cover" src="{{ track.album_cover }}" alt="Album Cover">
+                    <button class="trash-button" onclick="removeSong('{{ track.id }}')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">
+                            <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0"/>
+                        </svg>
+                    </button>
                     <div class="song-info">
                         <div class="song-name">{{ track.name }}</div>
                         <div class="artist-name">{{ track.artist }}</div>
                     </div>
                 </div>
             {% endfor %}
+            <div class="song-card add-recommendations" id="add-recommendations-card">
+                <div class="add-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
+                    </svg>
+                </div>
+                <div>Click to add suggestions</div>
+                <input type="range" min="1" max="5" value="1" class="recommend-slider" id="recommendSlider">
+                <button class="recommend-button" onclick="addRecommendations()">Add</button>
+            </div>
         </div>
     </div>
     <div class="form-container">
         <form action="/save_playlist" method="post">
-            <button type="submit">Save Playlist</button>
+            <input type="hidden" name="track_ids" id="trackIdsInput">
+            <button type="submit" onclick="updateTrackIds()">Save Playlist</button>
         </form>
     </div>
+    <script>
+        function updateTrackIds() {
+            const trackIds = Array.from(document.querySelectorAll('.song-card'))
+                .filter(card => card.id.startsWith('song-'))
+                .map(card => card.id.replace('song-', ''));
+            document.getElementById('trackIdsInput').value = trackIds.join(',');
+        }
+    
+        function removeSong(trackId) {
+            console.log(`Attempting to remove track_id: ${trackId}`);  // Debugging information
+            fetch('{{ url_for("main.remove_song") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({ 'track_id': trackId })
+            }).then(response => response.json()).then(data => {
+                console.log(`Response from server: ${JSON.stringify(data)}`);  // Debugging information
+                if (data.status === 'success') {
+                    document.getElementById('song-' + trackId).remove();
+                    updateTrackIds(); // Update hidden input field
+                } else {
+                    console.error('Error removing song:', data.message);  // Debugging information
+                }
+            }).catch(error => {
+                console.error('Error:', error);  // Debugging information
+            });
+        }
+    
+        function addRecommendations() {
+            const sliderValue = document.getElementById('recommendSlider').value;
+            fetch('{{ url_for("main.add_recommendations") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({ 'num_recommendations': sliderValue })
+            }).then(response => response.json()).then(data => {
+                console.log(`Response from server: ${JSON.stringify(data)}`);  // Debugging information
+                if (data.status === 'success') {
+                    const songCardsContainer = document.getElementById('song-cards');
+                    const addRecommendationsCard = document.getElementById('add-recommendations-card');
+                    data.new_tracks.forEach(track => {
+                        const newCard = document.createElement('div');
+                        newCard.classList.add('song-card');
+                        newCard.id = 'song-' + track.id;
+                        newCard.innerHTML = `
+                            <img class="album-cover" src="${track.album.images[0].url}" alt="Album Cover">
+                            <button class="trash-button" onclick="removeSong('${track.id}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">
+                                    <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0"/>
+                                </svg>
+                            </button>
+                            <div class="song-info">
+                                <div class="song-name">${track.name}</div>
+                                <div class="artist-name">${track.artists[0].name}</div>
+                            </div>
+                        `;
+                        songCardsContainer.insertBefore(newCard, addRecommendationsCard);
+                    });
+                    updateTrackIds(); // Update hidden input field
+                } else {
+                    console.error('Error adding recommendations:', data.message);  // Debugging information
+                }
+            }).catch(error => {
+                console.error('Error:', error);  // Debugging information
+            });
+        }
+    </script>
 </body>
 </html>
