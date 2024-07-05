@@ -44,7 +44,7 @@
             flex-wrap: wrap;
             justify-content: center;
         }
-        .song-card {
+        .song-card, .add-recommendations {
             background-color: #1e1e1e;
             display: inline-block;
             text-align: left;
@@ -60,25 +60,65 @@
             width: 200px;
             height: 200px;
         }
+        .song-card {
+            position: relative;
+            width: 200px; /* Adjust width as needed */
+            height: 300px; /* Adjust height as needed */
+            overflow: hidden;
+            border-radius: 10px;
+            background-color: #1a1a1a;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+            transition: transform 0.3s ease;
+        }
+        
+        .song-card:hover {
+            transform: scale(1.05);
+        }
+        
+        .album-cover {
+            width: 100%;
+            height: 70%; /* Adjust height as needed */
+            object-fit: cover;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
+        
+        .song-info {
+            padding: 10px;
+            color: white;
+        }
+        
+        .song-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .artist-name {
+            color: gray;
+        }
+        
         .trash-button {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(255, 165, 0, 0.9); /* Orange color */
-            border: none;
-            border-radius: 50%;
+            top: -55px;
+            right: -55px;
+            background: #121212; /* Orange color */
+            border: #121212;
+            border-radius: 0% 0% 0% 50%;
             cursor: pointer;
-            padding: 10px;
-            display: none;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); /* Drop shadow */
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+            transition: top 0.3s ease, right 0.3s ease;
         }
+        
         .song-card:hover .trash-button {
-            display: block;
+            top: 0px;
+            right: 0px;
         }
+        
         .trash-button svg {
-            width: 24px; /* Larger icon */
-            height: 24px;
-            fill: #fff; /* White color */
+            width: 26px;
+            height: 26px;
+            fill: #ff5900;
         }
         .song-info {
             padding: 10px;
@@ -105,37 +145,77 @@
         .form-container button:hover {
             background-color: #4a0072; /* Darker purple color */
         }
+        /* Add recommendations container */
         .add-recommendations {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            background-color: #2e2e2e;
             color: gray;
-            width: 200px;
-            margin: 20px;
-            font-family: Arial, sans-serif;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            overflow: hidden;
-            padding: 20px;
         }
+        
+        /* Add icon style */
         .add-icon {
-            font-size: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 200px;
+            height: 200px;
+            font-size: 80px;
             color: gray;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease; /* Add transition for hover effect */
         }
+        
+        /* Add hover effect to the icon */
+        .add-icon:hover {
+            transform: scale(1.1); /* Scale the icon */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add shadow */
+            color: #6a1b9a; /* Change color on hover */
+        }
+        
+        /* Add glow effect to the icon */
+        .add-icon:hover .bi-plus-lg {
+            filter: drop-shadow(0 0 10px #6a1b9a); /* Add glow effect */
+        }
+        /* Style the slider container */
         .recommend-slider {
             width: 80%;
             margin-top: 10px;
+            -webkit-appearance: none; /* Override default styles */
+            appearance: none;
+            height: 5px; /* Slider height */
+            background: #ddd; /* Track color */
+            outline: none; /* Remove outline */
+            opacity: 0.7; /* Set transparency */
+            transition: opacity .15s ease-in-out; /* Transition for hover effect */
         }
-        .recommend-button {
-            background-color: orange;
-            color: white;
-            border: none;
+
+        .recommend-slider:hover {
+            opacity: 1; /* Fully opaque on hover */
+        }
+
+        /* Style the slider thumb */
+        .recommend-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; /* Override default styles */
+            appearance: none;
+            width: 25px; /* Thumb width */
+            height: 25px; /* Thumb height */
+            background: #6a1b9a; /* Thumb color */
+            cursor: pointer; /* Cursor on hover */
+            border-radius: 50%; /* Rounded thumb */
+        }
+
+        .recommend-slider::-moz-range-thumb {
+            width: 25px; /* Thumb width */
+            height: 25px; /* Thumb height */
+            background: #6a1b9a; /* Thumb color */
+            cursor: pointer; /* Cursor on hover */
+            border-radius: 50%; /* Rounded thumb */
+        }
+        .suggestion-text {
             padding: 10px;
-            cursor: pointer;
-            border-radius: 4px;
-            margin-top: 10px;
+            font-weight: bold;
+            color: #fff;
         }
     </style>
 </head>
@@ -171,14 +251,13 @@
                 </div>
             {% endfor %}
             <div class="song-card add-recommendations" id="add-recommendations-card">
-                <div class="add-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
+                <div class="add-icon" onclick="addRecommendations()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
                         <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
                     </svg>
                 </div>
-                <div>Click to add suggestions</div>
-                <input type="range" min="1" max="5" value="1" class="recommend-slider" id="recommendSlider">
-                <button class="recommend-button" onclick="addRecommendations()">Add</button>
+                <div class="suggestion-text" id="suggestionText">Click to add 1 song</div>
+                <input type="range" min="1" max="5" value="1" class="recommend-slider" id="recommendSlider" oninput="updateSuggestionText()">
             </div>
         </div>
     </div>
@@ -195,7 +274,7 @@
                 .map(card => card.id.replace('song-', ''));
             document.getElementById('trackIdsInput').value = trackIds.join(',');
         }
-    
+
         function removeSong(trackId) {
             console.log(`Attempting to remove track_id: ${trackId}`);  // Debugging information
             fetch('{{ url_for("main.remove_song") }}', {
@@ -216,7 +295,7 @@
                 console.error('Error:', error);  // Debugging information
             });
         }
-    
+
         function addRecommendations() {
             const sliderValue = document.getElementById('recommendSlider').value;
             fetch('{{ url_for("main.add_recommendations") }}', {
@@ -255,6 +334,12 @@
             }).catch(error => {
                 console.error('Error:', error);  // Debugging information
             });
+        }
+
+        function updateSuggestionText() {
+            const sliderValue = document.getElementById('recommendSlider').value;
+            const suggestionText = document.getElementById('suggestionText');
+            suggestionText.textContent = `Click to add ${sliderValue} song${sliderValue > 1 ? 's' : ''}`;
         }
     </script>
 </body>
